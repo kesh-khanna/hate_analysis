@@ -33,12 +33,12 @@ from sklearn.svm import LinearSVC
 
 def download_data():
     dataset = datasets.load_dataset('ucberkeley-dlab/measuring-hate-speech')
+    print(dataset)
     df = dataset['train'].to_pandas()
     df.describe()
     return df
 
-
-def main():
+def preprocess():
     df = download_data()
     # keep the columns we need
     df = df[['text', 'hate_speech_score', 'annotator_severity']]
@@ -76,6 +76,12 @@ def main():
     plt.title('Distribution of Hate Speech Score over 0')
     plt.savefig('hate_speech_score.png')
 
+    return df
+
+
+def main():
+    
+    df = preprocess()
     # create our pipeline
     # remove punctuation, lowercase, tokenize, remove stopwords, lemmatize
     # vectorize using TF-IDF
