@@ -38,6 +38,31 @@ def download_data():
     df.describe()
     return df
 
+
+def visualize_data():
+    """
+    Do an exploration of the data for the UC Berkeley Hate Speech dataset
+    Create some figures to better understand the data
+    """
+    df = download_data()
+
+    # plot the distribution of the hate speech score
+    plt.hist(df['hate_speech_score'], bins=20)
+    plt.title('Distribution of Hate Speech Score')
+    plt.xlabel('Hate Speech Score')
+    plt.ylabel('Count')
+    plt.savefig('hate_speech_score.png')
+
+    # get the value counts for the annotator ideology
+    counts = df['annotator_ideology'].value_counts()
+
+    # plot the distribution of the annotator ideology, by color with a legend
+    plt.figure()
+    plt.bar(counts.index, counts.values)
+    plt.title('Distribution of Annotator Ideology')
+    plt.legend()
+    plt.savefig('annotator_ideology.png')
+
 def preprocess():
     df = download_data()
     # keep the columns we need
@@ -73,14 +98,13 @@ def preprocess():
 
     # graph the distribution of the hate speech score
     plt.hist(df['hate_speech_score'], bins=20)
-    plt.title('Distribution of Hate Speech Score over 0')
+    plt.title('Distribution of Hate Speech Score')
     plt.savefig('hate_speech_score.png')
 
     return df
 
 
 def main():
-    
     df = preprocess()
     # create our pipeline
     # remove punctuation, lowercase, tokenize, remove stopwords, lemmatize
@@ -89,14 +113,18 @@ def main():
 
     model = Pipeline([("vector", CountVectorizer(ngram_range=(1, 3), stop_words='english')),
                       ("trans", TfidfTransformer()),
-                      ("clf", LinearSVC(penalty="l2", C=1))])
+                      ("clf", RandomForestClassifier(n_estimators=5))])
 
     X = df['text']
     y = df['label']
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=123)
+
+    # print the number of features that are extracted with the vectorizer
 
     model.fit(X_train, y_train)
+
+    print(len(model.named_steps['vector'].get_feature_names_out()))
 
     y_pred = model.predict(X_test)
 
@@ -130,11 +158,6 @@ def main():
     plt.hist(correctly_classified_y, bins=20)
     plt.title('Distribution of Correctly Classified Examples')
     plt.savefig('correctly_classified.png')
-
-
-
-
-
 
 
 # Custom transformer to select numerical columns
@@ -206,6 +229,9 @@ def predict_ideology():
 
     model.fit(X_train, y_train)
 
+    # print the number of features that are extracted with the vectorizer
+    print(len(model.named_steps['features'].transformer_list[0][1].get_feature_names()))
+
     y_pred = model.predict(X_test)
 
     print(classification_report(y_test, y_pred))
@@ -214,3 +240,4 @@ def predict_ideology():
 if __name__ == '__main__':
     main()
     # predict_ideology()
+    # visualize_data()
